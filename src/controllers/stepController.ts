@@ -121,9 +121,25 @@ export class StepController {
             return res.status(400).json({ error: 'yyyy-mm-dd 형태가 아닙니다.' });
         }
         const hourlyArr: {[key: string]: number} = {}
-        for (let h = 0; h < 24; h++) {
-            const key = `${h}~${h+1}`
+        for (let i = 0; i < 24; i++) {
+            const key = `${i.toString().padStart(2, '0')}~${(i + 1).toString().padStart(2, '0')}`;
+            hourlyArr[key] = 0;
         }
+
+        // 날짜 필터링
+        const filtered = steps.filterByDate(date)
+
+        // 시간대별 집계
+        for (const step of filtered) {
+            const hour = new Date(step.created_at).getHours();
+            const key = `${hour.toString().padStart(2, '0')}~${(hour + 1).toString().padStart(2, '0')}`;
+            hourlyArr[key] += step.getCount();
+        }
+        
+        return res.status(200).json({
+            date,
+            hourlySteps: hourlyArr
+        });
 
     }
 
