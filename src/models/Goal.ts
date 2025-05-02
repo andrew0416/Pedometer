@@ -22,6 +22,11 @@ class Goals {
     add(goal: Goal): void {
         this.goalArr.push(goal);
     }
+
+    // userId 말고 date도 고려해야 할 수도 있음음
+    filterByUserId(userId: number): Goal[] {
+        return this.goalArr.filter(goal => goal.user_id === userId);
+    }
 }
 
 export { Goal, Goals };

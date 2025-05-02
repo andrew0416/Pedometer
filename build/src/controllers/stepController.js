@@ -9,6 +9,7 @@ class StepController {
     // 2. 오늘/특정 날짜 걸음 수 조회
     getStepsByDate(req, res) {
         const { date } = req.query;
+        let targetDate = date || new Date().toISOString().split('T')[0]; // 오늘 날짜를 yyyy-mm-dd 형식으로
         console.log('오늘/특정 날짜 걸음 수 조회');
     }
     // 3. 기간별 통계 조회 (평균, 최댓값, 최솟값)
