@@ -1,0 +1,30 @@
+{
+  "name": "pedometer",
+  "version": "1.0.0",
+  "description": "[과제 제약사항]\r 백엔드\r 강의에서 백엔드 구조가 좀 너무 초보자한테 맞춰서 하긴 합니다.\r 그래서 저번에 말했던 객체지향프로그래밍 기억하시죠?\r 그래서 이번 백엔드는 객체를 만들어서 진행하는게 필수입니다. ERD에 맞춰서 테이블 설계를 할껀데 그 테이블 즉 도메인을 class로 민들어서 해주시면 좋겠어요.\r Controller - Service - Repostiory - Model 형태로 구조를 잡으시면 좋겠습니다.\r 한 메서드당 최대 15자 라인까지만 가능하도록 하겠습니다.\r 마지막으로 google typescript convention에 맞춰서 해주세요... 제발...",
+  "main": "src/app.ts",
+  "scripts": {
+    "compile": "tsc && node ./build/src/app.js",
+    "start": "nodemon -e ts --exec \"npm run compile\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andrew0416/Pedometer.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/andrew0416/Pedometer/issues"
+  },
+  "homepage": "https://github.com/andrew0416/Pedometer#readme",
+  "devDependencies": {
+    "@types/express": "^5.0.1",
+    "@types/node": "^22.15.3",
+    "nodemon": "^3.1.10",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
