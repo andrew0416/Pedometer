@@ -1,22 +1,24 @@
 import { Request, Response } from 'express';
-import {testUser1,testUser2,testUser3,testFriends,testGoals,testSteps} from '../models/test_instance'
-import { Step } from '../models/Step';
+import {testFriends,testGoals,testSteps} from '../models/test_instance'
+import { Step, Steps } from '../models/Step';
 import { DateQuery, DateRangeQuery, AuthPayload } from '../types/index';
 
 export class StepController {
 
     // 1. 사용자 걸음 수 저장
-    postSteps(req: Request, res: Response) {
+    postSteps(req: Request<{}, {}, AuthPayload, {}>, res: Response) {
+        const userId = parseInt(req.body.userId); // jwt
+
         console.log ('사용자 걸음 수 저장');
     }
 
     // 2. 오늘/특정 날짜 걸음 수 조회
-    getStepsByDate(req: Request<{}, {}, {}, DateQuery>, res: Response){
+    getStepsByDate(req: Request<{}, {}, AuthPayload, DateQuery>, res: Response){
+        const userId: number = parseInt(req.body.userId); //jwt
         let { date } = req.query;
 
-        console.log('오늘/특정 날짜 걸음 수 조회');
-
         let steps = testSteps; // 임시 사용
+        // let user_id = 1 // 임시 유저 아이디
 
         if (!date) {
             date = new Date().toISOString().split('T')[0];  // yyyy-mm-dd 형식으로 오늘 날짜
@@ -29,20 +31,21 @@ export class StepController {
         }
 
         // steps 배열에서 해당 날짜의 걸음 수 찾기
-        const stepsOnDate: Step[] = steps.filterByDate(date)
+        const stepsOnDate: Step[] = steps.filterByUserIdAndDate(userId, date)
 
         // 총합 걸음 수(걸음 수가 존재하지 않을 경우 0)
         const totalSteps = stepsOnDate.reduce((sum, step) => sum + step.getCount(), 0);
     
-        return res.status(200).json({date: date, steps: totalSteps});
-       
-        
+        return res.status(200).json({
+            date: date,
+            steps: totalSteps
+        });        
     }
     
     // 3. 기간별 통계 조회 (평균, 최댓값, 최솟값)
     getStatistics(req: Request<{}, {}, AuthPayload, DateRangeQuery>, res: Response) {
+        const userId: number = parseInt(req.body.userId); //jwt
         let { startDate, endDate } = req.query;
-        const userId = req.body.userId; //jwt
 
         let steps = testSteps; // 임시 사용
 
@@ -56,7 +59,7 @@ export class StepController {
             return res.status(400).send({ error: 'yyyy-mm-dd 형태가 아닙니다.' });
         }
 
-        const filtered = steps.filterByDateRange(startDate, endDate)
+        const filtered = steps.filterByUserIdAndDateRange(userId, startDate, endDate)
         
         if (filtered.length === 0) {
             return res.status(404).json({ error: '해당 기간에 데이터가 없습니다.' });
@@ -67,48 +70,44 @@ export class StepController {
         const max = Math.max(...counts);
         const min = Math.min(...counts);
         
-        return res.status(200).json({ average, max, min });
+        return res.status(200).json({
+            average : average,
+            max : max,
+            min : min
+        });
         
     }
 
     // 6. 주별 평균 걸음 수
     getWeeklyStatistics(req: Request, res: Response): void {
-
+        const userId = parseInt(req.body.userId); // jwt
         const steps = testSteps;
         const currentDate = new Date();
 
         // 월요일 기준 이번 주 시작일 구하기
-
         const dayOfWeek = currentDate.getDay() === 0 ? 6 : currentDate.getDay() - 1;
         const startOfWeek = new Date(currentDate);
         startOfWeek.setDate(currentDate.getDate() - dayOfWeek);
-
 
         // 날짜 변환
         const formatDate = (date: Date): string => date.toISOString().split('T')[0];
         const startDate = formatDate(startOfWeek);
         const endDate = formatDate(currentDate);
-        
 
-        const filtered = steps.filterByDateRange(startDate, endDate)
+        const filtered = steps.filterByUserIdAndDateRange(userId, startDate, endDate)
         const counts = filtered.map(step => step.getCount());
         const average = counts.reduce((a, b) => a + b, 0) / counts.length;
         const total = counts.reduce((a, b) => a + b, 0);
-    
 
         res.status(200).json({
             weekly_average: average,
-        })
-        
-        
-        
-      
+        });      
     }
 
     // 7. 시간대별 걸음 수 통계
     getHourlyStatistics(req: Request<{}, {}, AuthPayload, DateQuery>, res: Response) {
         let { date } = req.query;
-        const userId = req.body.userId;
+        const userId = parseInt(req.body.userId);
         let steps = testSteps; // 임시 사용
 
         if (!date) {
@@ -127,7 +126,7 @@ export class StepController {
         }
 
         // 날짜 필터링
-        const filtered = steps.filterByDate(date)
+        const filtered = steps.filterByUserIdAndDate(userId, date)
 
         // 시간대별 집계
         for (const step of filtered) {
@@ -137,14 +136,10 @@ export class StepController {
         }
         
         return res.status(200).json({
-            date,
+            date : date,
             hourlySteps: hourlyArr
         });
-
     }
-
-        
-        
 }
 
 export const stepController = new StepController();

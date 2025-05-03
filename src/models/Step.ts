@@ -28,33 +28,29 @@ class Steps {
         this.stepArr.push(step);
     }
 
-    filterByDate(date: string): Step[] {
-        return this.stepArr.filter(step => step.created_at.split(' ')[0] === date);
-    }
-
-    filterByDateRange(startDate: string, endDate: string): Step[] {
-        const filteredArr = this.stepArr.filter(step => {
-            const dateOnly = step.created_at.split('T')[0];
-            return dateOnly >= startDate && dateOnly <= endDate;
-        });
-        return filteredArr
-    }
-
-    filterByUserId(userId: number): Step[] {
-        return this.stepArr.filter(step => step.user_id === userId);
-    }
-
-    filterByUserIdAndDate(userId: number, date: string): Step[] { // 나중에 수정할 수 있음
+    // userId와 date에 해당하는 step[] 반환
+    filterByUserIdAndDate(userId: number, date: string): Step[] {
         return this.stepArr.filter(step => {
-            const stepDate = step.created_at.split(' ')[0];
-            return step.user_id === userId && stepDate === date;
+            const dateOnly = step.created_at.split('T')[0];
+            return step.user_id === userId && dateOnly === date;
         });
     }
 
+    // userId와 date range에 해당하는 step[] 반환
+    filterByUserIdAndDateRange(user_id:number, startDate: string, endDate: string): Step[] {
+        return this.stepArr.filter(step => {
+            const dateOnly = step.created_at.split('T')[0];
+            return step.user_id ===  user_id && dateOnly >= startDate && dateOnly <= endDate;
+        });
+    }
 
-
-
-
+    // // date range에 해당하는 step[] 반환
+    // filterByDateRange(startDate: string, endDate: string): Step[] {
+    //     return this.stepArr.filter(step => {
+    //         const dateOnly = step.created_at.split('T')[0];
+    //         return dateOnly >= startDate && dateOnly <= endDate;
+    //     });
+    // }
 }
 
 export { Step, Steps };

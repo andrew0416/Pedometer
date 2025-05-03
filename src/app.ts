@@ -5,6 +5,7 @@ import friendRouter from "./routes/friendRoutes";
 import authRouter from "./routes/authRoutes";
 
 const app = express();
+app.use(express.json());
 
 app.set("port", process.env.PORT || 3000);
 

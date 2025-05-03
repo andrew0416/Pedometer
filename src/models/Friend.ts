@@ -20,6 +20,10 @@ class Friends {
     add(friend: Friend): void {
         this.FriendArr.push(friend);
     }
+
+    findFollower(user_id: number): number[] {
+        return this.FriendArr.filter(f => f.followee_id === user_id).map(f => f.follower_id)
+    }
 }
 
 export { Friend, Friends };

@@ -1,12 +1,12 @@
 export interface DateQuery {
-    date?: string;
+    date: string;
 }
 
 export interface DateRangeQuery {
-    startDate?: string;
+    startDate: string;
     endDate?: string;
 }
 
 export interface AuthPayload {
-    userId?: string;
+    userId: string;
 }

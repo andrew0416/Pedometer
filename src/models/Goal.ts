@@ -22,10 +22,13 @@ class Goals {
     add(goal: Goal): void {
         this.goalArr.push(goal);
     }
-
-    // userId 말고 date도 고려해야 할 수도 있음음
-    filterByUserId(userId: number): Goal[] {
-        return this.goalArr.filter(goal => goal.user_id === userId);
+    
+    // userId와 date에 해당하는 goal[] 반환
+    filterByUserIdAndDate(userId: number, date: string){
+        return this.goalArr.filter(goal => {
+            const dateOnly = goal.date.split('T')[0];
+            return goal.user_id === userId && dateOnly === date;
+        });
     }
 }
 
