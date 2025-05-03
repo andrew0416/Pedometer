@@ -2,9 +2,11 @@ import { Request, Response } from 'express';
 import { Step, Steps } from '../models/Step';
 import { Goal, Goals } from '../models/Goal';
 import {testGoals, testSteps} from '../models/test_instance'
-import { Prisma } from '../../generated/prisma';
+import { PrismaClient } from '../../generated/prisma';
 import { validateUserId } from '../utils/userUtils';
 import { ErrorResponse } from '../types/index';
+
+const prisma = new PrismaClient();
 
 export class GoalController {
     // 4. 현재의 목표 걸음 수 설정

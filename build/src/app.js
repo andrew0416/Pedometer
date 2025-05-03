@@ -9,6 +9,7 @@ const goalRoutes_1 = __importDefault(require("./routes/goalRoutes"));
 const friendRoutes_1 = __importDefault(require("./routes/friendRoutes"));
 const authRoutes_1 = __importDefault(require("./routes/authRoutes"));
 const app = (0, express_1.default)();
+app.use(express_1.default.json());
 app.set("port", process.env.PORT || 3000);
 app.get("/", (req, res) => {
     res.send("Hello World!");

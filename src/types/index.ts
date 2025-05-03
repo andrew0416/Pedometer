@@ -1,9 +1,9 @@
 export interface StepCountQuery {
-    stepCount: number;
+    stepCount?: number;
 }
 
 export interface DateQuery {
-    date: string;
+    date?: string;
 }
 
 export interface DateRangeQuery {

@@ -2,24 +2,35 @@ import { Request, Response } from 'express';
 import {testFriends,testGoals,testSteps} from '../models/test_instance'
 import { Step, Steps } from '../models/Step';
 import { DateQuery, DateRangeQuery, AuthPayload, StepCountQuery, ErrorResponse } from '../types/index';
-import { Prisma } from '../../generated/prisma';
+import { PrismaClient  } from '../../generated/prisma';
 import { validateUserId } from '../utils/userUtils';
 import { validateDate, validateDateRange, getStartOfWeek } from '../utils/dateUtils';
+import { validateStepCount } from '../utils/stepUtils';
+
+const prisma = new PrismaClient();
 
 export class StepController {
-
     // 1. 사용자 걸음 수 저장
-    async postSteps(req: Request<{}, {}, StepCountQuery, {}>, res: Response) {
-        // userId
-        
+    async postSteps(req: Request<{}, {}, StepCountQuery, {}>, res: Response) {   
         try {
-            const { stepCount }: {stepCount: number} = req.body;
+            const userId: number | ErrorResponse = validateUserId(req.body); // 
+            const stepCount: number | ErrorResponse = validateStepCount(req.body);
+            if(typeof userId !== 'number'){
+                throw userId
+            }
+            if(typeof stepCount !== 'number'){
+                throw stepCount
+            }
+            
             const steps: Steps = new Steps()
             const newStep = new Step(0, userId, stepCount, new Date().toISOString())
         
             await steps.add(newStep);
             return res.status(200).json({ message: '걸음 수 저장 성공' });
-        } catch (err) {
+        } catch (err: any) {
+            if (err.status && err.error) {
+                return res.status(err.status).json({ error: err.err, target: err.target });
+            }
             return res.status(500).json({ error: '알 수 없는 에러', detail: err });
         }
     }

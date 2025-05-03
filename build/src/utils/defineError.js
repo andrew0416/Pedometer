@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.INVALID_DATE_FORMAT = exports.EQUAL_FRIENDSHIP = exports.INVALID_PARAMETER = exports.MISSING_PARAMETER = void 0;
+const MISSING_PARAMETER = { status: 400, error: '파라미터가 비어있습니다.' };
+exports.MISSING_PARAMETER = MISSING_PARAMETER;
+const INVALID_PARAMETER = { status: 400, error: '파라미터가 유효하지 않은 값입니다.' };
+exports.INVALID_PARAMETER = INVALID_PARAMETER;
+const EQUAL_FRIENDSHIP = { status: 400, error: 'Follower와 followee는 동일할 수 없습니다.' };
+exports.EQUAL_FRIENDSHIP = EQUAL_FRIENDSHIP;
+const INVALID_DATE_FORMAT = { status: 400, error: 'yyyy-mm-dd 형식이 아닙니다.' };
+exports.INVALID_DATE_FORMAT = INVALID_DATE_FORMAT;
