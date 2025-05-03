@@ -1,40 +1,51 @@
 import { Request, Response } from 'express';
 import {testFriends,testGoals,testSteps} from '../models/test_instance'
 import { Step, Steps } from '../models/Step';
-import { DateQuery, DateRangeQuery, AuthPayload } from '../types/index';
+import { DateQuery, DateRangeQuery, AuthPayload, StepCountQuery, ErrorResponse } from '../types/index';
+import { Prisma } from '../../generated/prisma';
+import { validateUserId } from '../utils/userUtils';
+import { validateDate, validateDateRange, getStartOfWeek } from '../utils/dateUtils';
 
 export class StepController {
 
     // 1. 사용자 걸음 수 저장
-    postSteps(req: Request<{}, {}, AuthPayload, {}>, res: Response) {
-        const userId = parseInt(req.body.userId); // jwt
-
-        console.log ('사용자 걸음 수 저장');
+    async postSteps(req: Request<{}, {}, StepCountQuery, {}>, res: Response) {
+        // userId
+        
+        try {
+            const { stepCount }: {stepCount: number} = req.body;
+            const steps: Steps = new Steps()
+            const newStep = new Step(0, userId, stepCount, new Date().toISOString())
+        
+            await steps.add(newStep);
+            return res.status(200).json({ message: '걸음 수 저장 성공' });
+        } catch (err) {
+            return res.status(500).json({ error: '알 수 없는 에러', detail: err });
+        }
     }
 
     // 2. 오늘/특정 날짜 걸음 수 조회
-    getStepsByDate(req: Request<{}, {}, AuthPayload, DateQuery>, res: Response){
-        const userId: number = parseInt(req.body.userId); //jwt
-        let { date } = req.query;
-
-        let steps = testSteps; // 임시 사용
-        // let user_id = 1 // 임시 유저 아이디
-
-        if (!date) {
-            date = new Date().toISOString().split('T')[0];  // yyyy-mm-dd 형식으로 오늘 날짜
+    async getStepsByDate(req: Request<{}, {}, {}, DateQuery>, res: Response){
+        // userId
+        const userId: number | ErrorResponse = validateUserId(req.body); // jwt
+        if(typeof userId !== 'number'){
+            const { status, error, target } = userId;
+            return res.status(status).json({ error : error, target: target });
+        }
+        // date
+        const date: string | ErrorResponse = validateDate(req.query);
+        if(typeof date !== 'string'){
+            const { status, error, target } = date;
+            return res.status(status).json({ error : error, target: target });
         }
 
-        // 날짜 포맷 검증
-        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-        if (!dateRegex.test(date)) {
-            return res.status(400).send({ error: 'Invalid date format. Please use yyyy-mm-dd.' });
-        }
+        let steps: Steps = new Steps(); // 임시 사용
 
         // steps 배열에서 해당 날짜의 걸음 수 찾기
-        const stepsOnDate: Step[] = steps.filterByUserIdAndDate(userId, date)
+        const stepsOnDate: Step[] = await steps.filterByUserIdAndDate(userId, date)
 
         // 총합 걸음 수(걸음 수가 존재하지 않을 경우 0)
-        const totalSteps = stepsOnDate.reduce((sum, step) => sum + step.getCount(), 0);
+        const totalSteps: number = stepsOnDate.reduce((sum, step) => sum + step.getCount(), 0);
     
         return res.status(200).json({
             date: date,
@@ -43,32 +54,33 @@ export class StepController {
     }
     
     // 3. 기간별 통계 조회 (평균, 최댓값, 최솟값)
-    getStatistics(req: Request<{}, {}, AuthPayload, DateRangeQuery>, res: Response) {
-        const userId: number = parseInt(req.body.userId); //jwt
-        let { startDate, endDate } = req.query;
-
-        let steps = testSteps; // 임시 사용
-
-        if (!startDate || !endDate) {
-            return res.status(400).send({ error: 'startDate와 endDate는 빈 상태로 존재할 수 없습니다.' });
+    async getStatistics(req: Request<{}, {}, {}, DateRangeQuery>, res: Response) {
+        // userId
+        const userId: number | ErrorResponse = validateUserId(req.body); // jwt
+        if(typeof userId !== 'number'){
+            const { status, error, target } = userId;
+            return res.status(status).json({ error : error, target: target });
         }
-
-        // 날짜 포맷 검증
-        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-        if (!dateRegex.test(startDate) || !dateRegex.test(endDate)) {
-            return res.status(400).send({ error: 'yyyy-mm-dd 형태가 아닙니다.' });
+        // startDate, endDate
+        const validatedDateRange: {startDate: string, endDate: string} | ErrorResponse = validateDateRange(req.query, false);
+        if('error' in validatedDateRange){
+            const { status, error, target } = validatedDateRange;
+            return res.status(status).json({ error : error, target: target });
         }
+        const { startDate, endDate } = validatedDateRange;
 
-        const filtered = steps.filterByUserIdAndDateRange(userId, startDate, endDate)
+        let steps = new Steps();
+
+        const filtered = await steps.filterByUserIdAndDateRange(userId, startDate, endDate)
         
         if (filtered.length === 0) {
             return res.status(404).json({ error: '해당 기간에 데이터가 없습니다.' });
         }
         
-        const counts = filtered.map(step => step.getCount());
-        const average = counts.reduce((a, b) => a + b, 0) / counts.length;
-        const max = Math.max(...counts);
-        const min = Math.min(...counts);
+        const counts: number[] = filtered.map(step => step.getCount());
+        const average: number = counts.reduce((a, b) => a + b, 0) / counts.length;
+        const max: number = Math.max(...counts);
+        const min: number = Math.min(...counts);
         
         return res.status(200).json({
             average : average,
@@ -79,25 +91,27 @@ export class StepController {
     }
 
     // 6. 주별 평균 걸음 수
-    getWeeklyStatistics(req: Request, res: Response): void {
-        const userId = parseInt(req.body.userId); // jwt
-        const steps = testSteps;
-        const currentDate = new Date();
+    async getWeeklyStatistics(req: Request<{}, {}, {}, {}>, res: Response) {
+        // userId
+        const userId: number | ErrorResponse = validateUserId(req.body); // jwt
+        if(typeof userId !== 'number'){
+            const { status, error, target } = userId;
+            return res.status(status).json({ error : error, target: target });
+        }
+
+        const steps: Steps = new Steps();
+        const currentDate: Date = new Date();
 
         // 월요일 기준 이번 주 시작일 구하기
-        const dayOfWeek = currentDate.getDay() === 0 ? 6 : currentDate.getDay() - 1;
-        const startOfWeek = new Date(currentDate);
-        startOfWeek.setDate(currentDate.getDate() - dayOfWeek);
+        const startOfWeek = getStartOfWeek()
 
         // 날짜 변환
         const formatDate = (date: Date): string => date.toISOString().split('T')[0];
-        const startDate = formatDate(startOfWeek);
-        const endDate = formatDate(currentDate);
+        const [startDate, endDate] = [startOfWeek, currentDate].map(formatDate);
 
-        const filtered = steps.filterByUserIdAndDateRange(userId, startDate, endDate)
-        const counts = filtered.map(step => step.getCount());
+        const filtered = await steps.filterByUserIdAndDateRange(userId, startDate, endDate)
+        const counts = await filtered.map(step => step.getCount());
         const average = counts.reduce((a, b) => a + b, 0) / counts.length;
-        const total = counts.reduce((a, b) => a + b, 0);
 
         res.status(200).json({
             weekly_average: average,
@@ -105,33 +119,35 @@ export class StepController {
     }
 
     // 7. 시간대별 걸음 수 통계
-    getHourlyStatistics(req: Request<{}, {}, AuthPayload, DateQuery>, res: Response) {
-        let { date } = req.query;
-        const userId = parseInt(req.body.userId);
-        let steps = testSteps; // 임시 사용
-
-        if (!date) {
-            date = new Date().toISOString().split('T')[0]; // 오늘 날짜로 설정 (yyyy-mm-dd)
+    async getHourlyStatistics(req: Request<{}, {}, {}, DateQuery>, res: Response) {
+        // userId
+        const userId: number | ErrorResponse = validateUserId(req.body); // jwt
+        if(typeof userId !== 'number'){
+            const { status, error, target } = userId;
+            return res.status(status).json({ error : error, target: target });
+        }
+        // date
+        const date: string | ErrorResponse = validateDate(req.query);
+        if(typeof date !== 'string'){
+            const { status, error, target } = date;
+            return res.status(status).json({ error : error, target: target });
         }
         
-        // 날짜 포맷 검증
-        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-        if (!dateRegex.test(date)) {
-            return res.status(400).json({ error: 'yyyy-mm-dd 형태가 아닙니다.' });
-        }
+        const steps: Steps = new Steps();
+
         const hourlyArr: {[key: string]: number} = {}
         for (let i = 0; i < 24; i++) {
-            const key = `${i.toString().padStart(2, '0')}~${(i + 1).toString().padStart(2, '0')}`;
+            const key: string = `${i.toString().padStart(2, '0')}~${(i + 1).toString().padStart(2, '0')}`;
             hourlyArr[key] = 0;
         }
 
         // 날짜 필터링
-        const filtered = steps.filterByUserIdAndDate(userId, date)
+        const filtered: Step[] = await steps.filterByUserIdAndDate(userId, date)
 
         // 시간대별 집계
         for (const step of filtered) {
-            const hour = new Date(step.created_at).getHours();
-            const key = `${hour.toString().padStart(2, '0')}~${(hour + 1).toString().padStart(2, '0')}`;
+            const hour: number = new Date(step.createdAt).getHours();
+            const key: string = `${hour.toString().padStart(2, '0')}~${(hour + 1).toString().padStart(2, '0')}`;
             hourlyArr[key] += step.getCount();
         }
         

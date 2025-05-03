@@ -1,18 +1,22 @@
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
 class Step {
     id: number;
-    user_id: number;
-    count: number;
-    created_at: string;
+    userId: number;
+    stepCount: number;
+    createdAt: string;
 
-    constructor(id: number, user_id: number, count: number, created_at: string) {
+    constructor(id: number, userId: number, stepCount: number, createdAt: string) {
         this.id = id;
-        this.user_id = user_id;
-        this.count = count;
-        this.created_at = created_at;
+        this.userId = userId;
+        this.stepCount = stepCount;
+        this.createdAt = createdAt;
     }
 
     getCount(): number{
-        return this.count
+        return this.stepCount
     }
 
 }
@@ -20,37 +24,55 @@ class Step {
 class Steps {
     stepArr: Step[];
 
-    constructor(stepArr: Step[]) {
+    constructor(stepArr: Step[] = []) {
         this.stepArr = stepArr;
     }
 
-    add(step: Step): void {
-        this.stepArr.push(step);
+    async add(step: Step): Promise<void> {
+        await prisma.step.create({
+            data: {
+                userId: step.userId,
+                stepCount: step.stepCount,
+                createdAt: step.createdAt,
+            },
+        });
     }
 
     // userId와 date에 해당하는 step[] 반환
-    filterByUserIdAndDate(userId: number, date: string): Step[] {
-        return this.stepArr.filter(step => {
-            const dateOnly = step.created_at.split('T')[0];
-            return step.user_id === userId && dateOnly === date;
+    async filterByUserIdAndDate(userId: number, date: string): Promise<Step[]> {
+        const start = new Date(date + 'T00:00:00.000Z');
+        const end = new Date(date + 'T23:59:59.999Z');
+    
+        const steps = await prisma.step.findMany({
+            where: {
+                userId,
+                createdAt: {
+                    gte: start,
+                    lte: end,
+                },
+            },
         });
+    
+        return steps.map(step => new Step( step.id, step.userId, step.stepCount, step.createdAt.toISOString()));
     }
 
     // userId와 date range에 해당하는 step[] 반환
-    filterByUserIdAndDateRange(user_id:number, startDate: string, endDate: string): Step[] {
-        return this.stepArr.filter(step => {
-            const dateOnly = step.created_at.split('T')[0];
-            return step.user_id ===  user_id && dateOnly >= startDate && dateOnly <= endDate;
+    async filterByUserIdAndDateRange(userId: number, startDate: string, endDate: string): Promise<Step[]> {
+        const start = new Date(startDate + 'T00:00:00.000Z');
+        const end = new Date(endDate + 'T23:59:59.999Z');
+    
+        const steps = await prisma.step.findMany({
+            where: {
+                userId,
+                createdAt: {
+                    gte: start,
+                    lte: end,
+                },
+            },
         });
+    
+        return steps.map(step => new Step( step.id, step.userId, step.stepCount, step.createdAt.toISOString()));
     }
-
-    // // date range에 해당하는 step[] 반환
-    // filterByDateRange(startDate: string, endDate: string): Step[] {
-    //     return this.stepArr.filter(step => {
-    //         const dateOnly = step.created_at.split('T')[0];
-    //         return dateOnly >= startDate && dateOnly <= endDate;
-    //     });
-    // }
 }
 
 export { Step, Steps };

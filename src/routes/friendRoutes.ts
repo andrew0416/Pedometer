@@ -13,7 +13,7 @@ router.post('/friends', (req, res) => {
 }); 
 
 // 8.2 친구 삭제
-router.delete('/friends/:uid', (req, res) => {
+router.delete('/friends/:followee_id', (req, res) => {
     friendController.deleteFriend(req, res)
 }); 
 

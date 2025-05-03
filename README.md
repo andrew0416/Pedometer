@@ -7,6 +7,9 @@
 - google typescript convention에 맞춰서 할 것
 - 가능하다면 ORM사용할 것(Prisma, TypeORM)
 
+[ DB ]
+- Prisma
+- SQLite
 
 📦 src
 ├── 📁 config               # 환경설정 및 DB 연결

@@ -18,7 +18,7 @@ let testFriends: Friends = new Friends([friends1, friends2, friends3])
 let goal1: Goal = new Goal(1, "2025-04-16", 1, 3000)
 let goal2: Goal = new Goal(2, "2025-04-30", 1, 5000)
 let goal3: Goal = new Goal(3, "2025-05-03", 1, 4000)
-let testGoals: Goals = new Goals([goal1, goal2])
+let testGoals: Goals = new Goals([goal1, goal2, goal3])
 
 let step1: Step = new Step(1, 1, 1500, "2025-04-17 12:50:50")
 let step2: Step = new Step(2, 1, 1500, "2025-04-17 17:50:50")

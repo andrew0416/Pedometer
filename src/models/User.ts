@@ -1,3 +1,7 @@
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
 class User {
     id: number;
     email: string;
@@ -29,21 +33,39 @@ class User {
 class Users {
     UserArr: User[];
 
-    constructor(UserArr: User[]) {
+    constructor(UserArr: User[] = []) {
         this.UserArr = UserArr;
     }
 
-    add(user: User): void {
-        this.UserArr.push(user);
+    async add(user: User): Promise<void> {
+        await prisma.user.create({
+            data: {
+                email: user.getEmail(),
+                password: user.password,
+                salt: user.salt,
+                nickname: user.getNickName(),
+            },
+        });
     }
 
-    getUsersInfo(user_ids: number[]): { id: number; email: string; nickName: string }[] {
-        return this.UserArr
-        .filter(user => user_ids.includes(user.getId()))
-        .map(user => ({
-            id: user.getId(),
-            email: user.getEmail(),
-            nickName: user.getNickName()
+    async getUsersInfo(user_ids: number[]): Promise<{ id: number; email: string; nickName: string }[]> {
+        const users = await prisma.user.findMany({
+            where: {
+                id: {
+                    in: user_ids,
+                },
+            },
+            select: {
+                id: true,
+                email: true,
+                nickname: true,
+            },
+        });
+
+        return users.map(user => ({
+            id: user.id,
+            email: user.email,
+            nickName: user.nickname,
         }));
     }
 }
