@@ -38,36 +38,22 @@ class Goals {
     }
     updateGoal(userId, date, goalValue) {
         return __awaiter(this, void 0, void 0, function* () {
-            const start = new Date(date + 'T00:00:00.000Z');
-            const end = new Date(date + 'T23:59:59.999Z');
-            yield prisma.goal.updateMany({
-                where: {
-                    uid: userId,
-                    created_at: {
-                        gte: start,
-                        lte: end,
-                    },
-                },
-                data: {
-                    goal: goalValue,
-                },
-            });
+            yield prisma.$executeRaw `
+            UPDATE "Goal"
+            SET "goal" = ${goalValue}
+            WHERE "uid" = ${userId}
+            AND DATE("created_at") = ${date}
+        `;
         });
     }
     filterByUserIdAndDate(userId, date) {
         return __awaiter(this, void 0, void 0, function* () {
-            const start = new Date(date + 'T00:00:00.000Z');
-            const end = new Date(date + 'T23:59:59.999Z');
-            const goals = yield prisma.goal.findMany({
-                where: {
-                    uid: userId,
-                    created_at: {
-                        gte: start,
-                        lte: end,
-                    },
-                },
-            });
-            return goals.map(goal => new Goal(goal.id, goal.created_at.toISOString().split('T')[0], goal.uid, goal.goal));
+            const goals = yield prisma.$queryRaw `
+        SELECT * FROM "Goal"
+        WHERE "uid" = ${userId}
+        AND DATE("created_at") = ${date}
+    `;
+            return goals.map(goal => new Goal(goal.id, goal.created_at, goal.uid, goal.goal));
         });
     }
 }

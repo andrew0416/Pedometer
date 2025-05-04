@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { UserInfo } from '../types';
 
 const prisma = new PrismaClient();
 
@@ -48,7 +49,7 @@ class Users {
         });
     }
 
-    async getUsersInfo(user_ids: number[]): Promise<{ id: number; email: string; nickName: string }[]> {
+    async getUsersInfo(user_ids: number[]): Promise<UserInfo[]> {
         const users = await prisma.user.findMany({
             where: {
                 id: {
@@ -71,16 +72,4 @@ class Users {
 }
 
 export { User, Users };
-
-
-
-
-
-
-
-
-
-
-
-
 

@@ -70,7 +70,6 @@ class Steps {
                 const createdAt = new Date(step.createdAt);
                 return createdAt >= strictStart && createdAt <= strictEnd;
             });
-            console.log(filtered.length);
             return filtered.map(step => new Step(step.id, step.userId, step.stepCount, step.createdAt));
         });
     }

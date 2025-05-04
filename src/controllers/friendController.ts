@@ -108,14 +108,20 @@ export class FriendController {
         followee_ids.push(userId); // 유저 본인도 추가해야함.
         let followeeInfos: UserInfo[] = await users.getUsersInfo(followee_ids)
 
-        addAllUserRanking(steps, ranking, followeeInfos, [startDate, endDate])
+        await addAllUserRanking(steps, ranking, followeeInfos, [startDate, endDate])
 
-        const result = ranking.getRanking(); // RankEntry[] 형태
+        const result = ranking.getRanking();
         const dateRange = startDate === endDate ? startDate : `${startDate}~${endDate}`;
 
+        let rankingArr = []
+        for (let e of result){
+            let json = {[e.user_Id]: e.stepCount};
+            rankingArr.push(json)
+        }
+        
         const response = {
             date: dateRange,
-            ranking: Object.fromEntries(result.map(entry => [entry.user_Id, entry.stepCount]))
+            ranking: rankingArr
         };
 
         res.status(200).json(response);
@@ -124,7 +130,9 @@ export class FriendController {
 
 const addAllUserRanking = async (steps: Steps, ranking: RankingBoard, followeeInfos: UserInfo[], dateRange: string[]) => {
     const [startDate, endDate] = dateRange
+
     for (const info of followeeInfos) {
+
         let userStepArr: Step[] = await steps.filterByUserIdAndDateRange(info.id, startDate, endDate)
         const counts = userStepArr.map(step => step.getCount());
         const average = counts.reduce((a, b) => a + b, 0) / counts.length;
