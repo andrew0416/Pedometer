@@ -15,7 +15,6 @@ export function validateUserId(body: any): number | ErrorResponse {
     return userId;
 }
 
-// export function validateFriendship (userId: number, body: {error: string}, followeeId: number) {
 export function validateFriendship (userId: number, followeeId: number): ErrorResponse | null {
     if (!followeeId) {
         return {...MISSING_PARAMETER, target: 'followeeId'};

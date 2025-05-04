@@ -14,7 +14,6 @@ function validateUserId(body) {
     }
     return userId;
 }
-// export function validateFriendship (userId: number, body: {error: string}, followeeId: number) {
 function validateFriendship(userId, followeeId) {
     if (!followeeId) {
         return Object.assign(Object.assign({}, defineError_1.MISSING_PARAMETER), { target: 'followeeId' });

@@ -6,9 +6,9 @@ class Step {
     id: number;
     userId: number;
     stepCount: number;
-    createdAt: string;
+    createdAt: Date;
 
-    constructor(id: number, userId: number, stepCount: number, createdAt: string) {
+    constructor(id: number, userId: number, stepCount: number, createdAt: Date) {
         this.id = id;
         this.userId = userId;
         this.stepCount = stepCount;
@@ -40,39 +40,41 @@ class Steps {
 
     // userId와 date에 해당하는 step[] 반환
     async filterByUserIdAndDate(userId: number, date: string): Promise<Step[]> {
-        const start = new Date(date + 'T00:00:00.000Z');
-        const end = new Date(date + 'T23:59:59.999Z');
-    
-        const steps = await prisma.step.findMany({
-            where: {
-                userId,
-                createdAt: {
-                    gte: start,
-                    lte: end,
-                },
-            },
-        });
-    
-        return steps.map(step => new Step( step.id, step.userId, step.stepCount, step.createdAt.toISOString()));
+        const steps = await prisma.$queryRaw<Step[]>`
+        SELECT * FROM "Step"
+        WHERE "userId" = ${userId}
+        AND DATE("createdAt") = ${date}
+    `;
+        return steps.map(step => new Step( step.id, step.userId, step.stepCount, step.createdAt));
     }
 
     // userId와 date range에 해당하는 step[] 반환
     async filterByUserIdAndDateRange(userId: number, startDate: string, endDate: string): Promise<Step[]> {
-        const start = new Date(startDate + 'T00:00:00.000Z');
-        const end = new Date(endDate + 'T23:59:59.999Z');
-    
-        const steps = await prisma.step.findMany({
-            where: {
-                userId,
-                createdAt: {
-                    gte: start,
-                    lte: end,
-                },
-            },
+        const wideStart = new Date(new Date(startDate).getTime() - 24 * 60 * 60 * 1000)
+        .toISOString().split('T')[0] + 'T00:00:00.000Z';
+        const wideEnd = new Date(new Date(endDate).getTime() + 24 * 60 * 60 * 1000)
+            .toISOString().split('T')[0] + 'T23:59:59.999Z';
+
+        // 쿼리
+        const steps = await prisma.$queryRaw<Step[]>`
+            SELECT * FROM "Step"
+            WHERE "userId" = ${userId}
+            AND "createdAt" BETWEEN ${wideStart} AND ${wideEnd}
+        `;
+
+        // 정확한 범위 필터링
+        const strictStart = new Date(startDate + 'T00:00:00.000Z');
+        const strictEnd = new Date(endDate + 'T23:59:59.999Z');
+
+        const filtered = steps.filter(step => {
+            const createdAt = new Date(step.createdAt);
+            return createdAt >= strictStart && createdAt <= strictEnd;
         });
-    
-        return steps.map(step => new Step( step.id, step.userId, step.stepCount, step.createdAt.toISOString()));
-    }
+
+        console.log(filtered.length)
+
+        return filtered.map(step => new Step(step.id, step.userId, step.stepCount, step.createdAt));
+}
 }
 
 export { Step, Steps };

@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import {testFriends,testGoals,testSteps} from '../models/test_instance'
 import { Step, Steps } from '../models/Step';
 import { DateQuery, DateRangeQuery, AuthPayload, StepCountQuery, ErrorResponse } from '../types/index';
 import { PrismaClient  } from '../../generated/prisma';
@@ -23,7 +22,7 @@ export class StepController {
             }
             
             const steps: Steps = new Steps()
-            const newStep = new Step(0, userId, stepCount, new Date().toISOString())
+            const newStep = new Step(0, userId, stepCount, new Date())
         
             await steps.add(newStep);
             return res.status(200).json({ message: '걸음 수 저장 성공' });
@@ -37,14 +36,12 @@ export class StepController {
 
     // 2. 오늘/특정 날짜 걸음 수 조회
     async getStepsByDate(req: Request<{}, {}, {}, DateQuery>, res: Response){
-        // userId
         const userId: number | ErrorResponse = validateUserId(req.body); // jwt
+        const date: string | ErrorResponse = validateDate(req.query);
         if(typeof userId !== 'number'){
             const { status, error, target } = userId;
             return res.status(status).json({ error : error, target: target });
         }
-        // date
-        const date: string | ErrorResponse = validateDate(req.query);
         if(typeof date !== 'string'){
             const { status, error, target } = date;
             return res.status(status).json({ error : error, target: target });

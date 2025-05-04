@@ -30,7 +30,7 @@ class StepController {
                     throw stepCount;
                 }
                 const steps = new Step_1.Steps();
-                const newStep = new Step_1.Step(0, userId, stepCount, new Date().toISOString());
+                const newStep = new Step_1.Step(0, userId, stepCount, new Date());
                 yield steps.add(newStep);
                 return res.status(200).json({ message: '걸음 수 저장 성공' });
             }
@@ -45,14 +45,12 @@ class StepController {
     // 2. 오늘/특정 날짜 걸음 수 조회
     getStepsByDate(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
-            // userId
             const userId = (0, userUtils_1.validateUserId)(req.body); // jwt
+            const date = (0, dateUtils_1.validateDate)(req.query);
             if (typeof userId !== 'number') {
                 const { status, error, target } = userId;
                 return res.status(status).json({ error: error, target: target });
             }
-            // date
-            const date = (0, dateUtils_1.validateDate)(req.query);
             if (typeof date !== 'string') {
                 const { status, error, target } = date;
                 return res.status(status).json({ error: error, target: target });
