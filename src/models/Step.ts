@@ -19,6 +19,17 @@ class Step {
         return this.stepCount
     }
 
+    getDateTimeString(): string{
+        const yyyy = this.createdAt.getFullYear();
+        const mm = String(this.createdAt.getMonth() + 1).padStart(2, '0');
+        const dd = String(this.createdAt.getDate()).padStart(2, '0');
+        const hh = String(this.createdAt.getHours()).padStart(2, '0');
+        const mi = String(this.createdAt.getMinutes()).padStart(2, '0');
+        const ss = String(this.createdAt.getSeconds()).padStart(2, '0');
+
+    return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
+    }
+
 }
 
 class Steps {
@@ -29,13 +40,10 @@ class Steps {
     }
 
     async add(step: Step): Promise<void> {
-        await prisma.step.create({
-            data: {
-                userId: step.userId,
-                stepCount: step.stepCount,
-                createdAt: step.createdAt,
-            },
-        });
+        await prisma.$executeRaw`
+        INSERT INTO "Step" ("userId", "stepCount", "createdAt")
+        VALUES (${step.userId}, ${step.stepCount}, ${step.getDateTimeString()})
+    `;
     }
 
     // userId와 date에 해당하는 step[] 반환

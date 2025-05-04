@@ -22,6 +22,15 @@ class Step {
     getCount() {
         return this.stepCount;
     }
+    getDateTimeString() {
+        const yyyy = this.createdAt.getFullYear();
+        const mm = String(this.createdAt.getMonth() + 1).padStart(2, '0');
+        const dd = String(this.createdAt.getDate()).padStart(2, '0');
+        const hh = String(this.createdAt.getHours()).padStart(2, '0');
+        const mi = String(this.createdAt.getMinutes()).padStart(2, '0');
+        const ss = String(this.createdAt.getSeconds()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
+    }
 }
 exports.Step = Step;
 class Steps {
@@ -30,13 +39,10 @@ class Steps {
     }
     add(step) {
         return __awaiter(this, void 0, void 0, function* () {
-            yield prisma.step.create({
-                data: {
-                    userId: step.userId,
-                    stepCount: step.stepCount,
-                    createdAt: step.createdAt,
-                },
-            });
+            yield prisma.$executeRaw `
+        INSERT INTO "Step" ("userId", "stepCount", "createdAt")
+        VALUES (${step.userId}, ${step.stepCount}, ${step.getDateTimeString()})
+    `;
         });
     }
     // userId와 date에 해당하는 step[] 반환
