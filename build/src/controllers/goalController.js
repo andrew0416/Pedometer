@@ -58,7 +58,16 @@ class GoalController {
             const filteredGoals = yield goals.filterByUserIdAndDate(userId, today);
             // totalSteps와 목표 걸음 수 구하기 (없으면 0으로 설정)
             const totalSteps = filteredSteps.length > 0 ? filteredSteps.reduce((sum, step) => sum + step.stepCount, 0) : 0;
-            const stepGoal = filteredGoals.length > 0 ? filteredGoals[filteredGoals.length - 1].goal : 0;
+            // const stepGoal: number = filteredGoals.length > 0 ? filteredGoals[filteredGoals.length - 1].goal : 0;
+            let stepGoal;
+            if (filteredGoals.length > 0) {
+                stepGoal = filteredGoals[filteredGoals.length - 1].goal;
+            }
+            else {
+                const newGoal = new Goal_1.Goal(0, new Date(), userId, 10000);
+                goals.add(newGoal);
+                stepGoal = 10000;
+            }
             // 목표 달성 여부 확인
             const achieveGoal = totalSteps >= stepGoal;
             res.status(200).json({

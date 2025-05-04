@@ -6,7 +6,7 @@
   "scripts": {
     "copy-generated": "copyfiles \"generated/**\" build",
     "compile": "tsc && npm run copy-generated && node ./build/src/app.js",
-    "start": "nodemon -e ts --exec \"npm run compile\""
+    "start": "nodemon -e ts --ignore build --exec \"npm run compile\""
   },
   "repository": {
     "type": "git",
