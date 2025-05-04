@@ -4,15 +4,26 @@ const prisma = new PrismaClient();
 
 class Goal {
     id: number;
-    created_at: string;
+    created_at: Date;
     uid: number;
     goal: number;
 
-    constructor(id: number, date: string, uid: number, goal: number) {
+    constructor(id: number, date: Date, uid: number, goal: number) {
         this.id = id;
         this.created_at = date;
         this.uid = uid; 
         this.goal = goal;
+    }
+
+    getDateTimeString(): string{
+        const yyyy = this.created_at.getFullYear();
+        const mm = String(this.created_at.getMonth() + 1).padStart(2, '0');
+        const dd = String(this.created_at.getDate()).padStart(2, '0');
+        const hh = String(this.created_at.getHours()).padStart(2, '0');
+        const mi = String(this.created_at.getMinutes()).padStart(2, '0');
+        const ss = String(this.created_at.getSeconds()).padStart(2, '0');
+
+    return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
     }
 }
 
@@ -22,15 +33,14 @@ class Goals {
     constructor(GoalArr: Goal[] = []) {
         this.GoalArr = GoalArr;
     }
+
     async add(goal: Goal): Promise<void> {
-        await prisma.goal.create({
-            data: {
-                created_at: goal.created_at,
-                uid: goal.uid,
-                goal: goal.goal,
-            },
-        });
-    }
+            await prisma.$executeRaw`
+            INSERT INTO "Goal" ("uid", "goal", "created_at")
+            VALUES (${goal.uid}, ${goal.goal}, ${goal.getDateTimeString()})
+        `;
+        }
+    
 
     async updateGoal(userId: number, date: string, goalValue: number): Promise<void> {
         await prisma.$executeRaw`

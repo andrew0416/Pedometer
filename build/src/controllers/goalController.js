@@ -28,11 +28,11 @@ class GoalController {
             if (!goalCount) {
                 return res.status(400).json({ error: 'Invalid data' });
             }
-            const today = new Date().toISOString().split('T')[0];
+            const today = new Date();
             const goals = new Goal_1.Goals();
-            const existingGoal = yield goals.filterByUserIdAndDate(userId, today);
+            const existingGoal = yield goals.filterByUserIdAndDate(userId, today.toISOString().split('T')[0]);
             if (existingGoal.length > 0) {
-                goals.updateGoal(userId, today, goalCount);
+                goals.updateGoal(userId, today.toISOString().split('T')[0], goalCount);
                 return res.status(200).json({ message: '목표가 업데이트 되었습니다.' });
             }
             else {

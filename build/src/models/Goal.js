@@ -19,6 +19,15 @@ class Goal {
         this.uid = uid;
         this.goal = goal;
     }
+    getDateTimeString() {
+        const yyyy = this.created_at.getFullYear();
+        const mm = String(this.created_at.getMonth() + 1).padStart(2, '0');
+        const dd = String(this.created_at.getDate()).padStart(2, '0');
+        const hh = String(this.created_at.getHours()).padStart(2, '0');
+        const mi = String(this.created_at.getMinutes()).padStart(2, '0');
+        const ss = String(this.created_at.getSeconds()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
+    }
 }
 exports.Goal = Goal;
 class Goals {
@@ -27,13 +36,10 @@ class Goals {
     }
     add(goal) {
         return __awaiter(this, void 0, void 0, function* () {
-            yield prisma.goal.create({
-                data: {
-                    created_at: goal.created_at,
-                    uid: goal.uid,
-                    goal: goal.goal,
-                },
-            });
+            yield prisma.$executeRaw `
+            INSERT INTO "Goal" ("uid", "goal", "created_at")
+            VALUES (${goal.uid}, ${goal.goal}, ${goal.getDateTimeString()})
+        `;
         });
     }
     updateGoal(userId, date, goalValue) {
